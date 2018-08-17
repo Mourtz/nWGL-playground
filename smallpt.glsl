@@ -98,7 +98,7 @@ vec3 radiance(
     Sphere obj;
     int id = intersect(r, t, obj);
 
-    if (++depth > 16.0 || id < 0) {
+    if (++depth > 64.0 || id < 0) {
         depth = 0.0;
         return acc;
     }
@@ -184,7 +184,8 @@ void main()
 
     //seed = u_time + u_resolution.y * gl_FragCoord.x / u_resolution.x + gl_FragCoord.y / u_resolution.y;
     seed = u_frame == 1U ? dot( gl_FragCoord.xy, vec2(12.9898, 78.233) ) + 1113.1*float(u_frame) : o_ratts.y;
-  
+    seed *= sin(66.666*u_time);
+
     if (o_ratts.x == 0.0) {
         vec2 of = -0.5 + rand2();
         vec2 p = (-u_resolution.xy + 2.0 * (gl_FragCoord.xy + of)) / u_resolution.y;
@@ -201,6 +202,5 @@ void main()
     out_mask.xyz = o_mask;
     out_ro.xyz = r.o;
     out_rd.xyz = r.d;
-
     out_ratts.xy = vec2(o_ratts.x, seed);
 }
