@@ -1,0 +1,3 @@
+[submodule "nWGL"]
+	path = nWGL
+	url = https://github.com/Mourtz/nWGL
