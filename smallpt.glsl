@@ -14,7 +14,6 @@ uniform sampler2D u_ro;
 uniform sampler2D u_rd;
 uniform sampler2D u_ratts;
 
-uniform uint u_frame;
 uniform float u_time;
 uniform vec2 u_resolution;
 
@@ -39,14 +38,15 @@ const struct Sphere {
 };
 
 const Sphere lightSourceVolume = Sphere(20., vec3(50., 81.6, 81.6), vec3(12.), vec3(0.), DIFF);
-  
+
+#define S_R 1e3
 const Sphere spheres[NUM_SPHERES] = Sphere[](
-    Sphere(1e5, vec3(-1e5 + 1., 40.8, 81.6), vec3(0.), vec3(.75, .25, .25), DIFF),
-    Sphere(1e5, vec3(1e5 + 99., 40.8, 81.6), vec3(0.), vec3(.25, .25, .75), DIFF),
-    Sphere(1e5, vec3(50., 40.8, -1e5), vec3(0.), vec3(.75), DIFF),
-    Sphere(1e5, vec3(50., 40.8, 1e5 + 170.), vec3(0.), vec3(0.75), DIFF),
-    Sphere(1e5, vec3(50., -1e5, 81.6), vec3(0.), vec3(.75), DIFF),
-    Sphere(1e5, vec3(50., 1e5 + 81.6, 81.6), vec3(0.), vec3(.75), DIFF),
+    Sphere(S_R, vec3(-S_R + 1., 40.8, 81.6), vec3(0.), vec3(.75, .25, .25), DIFF),
+    Sphere(S_R, vec3(S_R + 99., 40.8, 81.6), vec3(0.), vec3(.25, .25, .75), DIFF),
+    Sphere(S_R, vec3(50., 40.8, -S_R), vec3(0.), vec3(.75), DIFF),
+    Sphere(S_R, vec3(50., 40.8, S_R + 170.), vec3(0.), vec3(0.75), DIFF),
+    Sphere(S_R, vec3(50., -S_R, 81.6), vec3(0.), vec3(.75), DIFF),
+    Sphere(S_R, vec3(50., S_R + 81.6, 81.6), vec3(0.), vec3(.75), DIFF),
     Sphere(16.5, vec3(27., 16.5, 47.), vec3(0.), vec3(1.), SPEC),
     Sphere(16.5, vec3(73., 16.5, 78.), vec3(0.), vec3(1.), REFR),
     Sphere(600., vec3(50., 681.33, 81.6), vec3(12.), vec3(0.), DIFF));
@@ -54,12 +54,12 @@ const Sphere spheres[NUM_SPHERES] = Sphere[](
 float intersect(Sphere s, Ray r)
 {
     vec3 op = s.p - r.o;
-    float t, epsilon = 1e-3, b = dot(op, r.d), det = b * b - dot(op, op) + s.r * s.r;
+    float t, b = dot(op, r.d), det = b * b - dot(op, op) + s.r * s.r;
     if (det < 0.)
         return 0.;
     else
         det = sqrt(det);
-    return (t = b - det) > epsilon ? t : ((t = b + det) > epsilon ? t : 0.);
+    return (t = b - det) > EPS ? t : ((t = b + det) > EPS ? t : 0.);
 }
 
 int intersect(Ray r, out float t, out Sphere s)
@@ -90,8 +90,6 @@ vec3 radiance(
     inout vec3 mask,
     inout float depth)
 {
-    const float rOff = 0.03;
-
     vec3 acc = vec3(0.0);
 
     float t;
@@ -119,25 +117,25 @@ vec3 radiance(
             float cosa = mix(cos_a_max, 1., rand());
             vec3 l = jitter(l0, 2.*PI*rand(), sqrt(1. - cosa*cosa), cosa);
 
-            if (intersect(Ray(x+nl*1e-1, l), t, s) == 8) {
+            if (intersect(Ray(x+nl*EPS, l), t, s) == 8) {
                 float omega = 2. * PI * (1. - cos_a_max);
                 e += (s.e * clamp(dot(l, n),0.,1.) * omega) / PI;
             }
         }
         acc += mask * obj.e + mask * obj.c * e;
         mask *= obj.c;
-        r = Ray(x + nl * rOff, d);
+        r = Ray(x + nl * EPS, d);
     }
     else if (obj.refl == SPEC) {
         acc += mask * obj.e;
         mask *= obj.c;
-        r = Ray(x + nl * rOff, reflect(r.d, n));
+        r = Ray(x + nl * EPS, reflect(r.d, n));
     }
     else {
         float a = dot(n, r.d), ddn = abs(a);
         float nc = 1., nt = 1.5, nnt = mix(nc / nt, nt / nc, float(a > 0.));
         float cos2t = 1. - nnt * nnt * (1. - ddn * ddn);
-        r = Ray(x + nl * rOff, reflect(r.d, n));
+        r = Ray(x + nl * EPS, reflect(r.d, n));
         if (cos2t > 0.) {
             vec3 tdir = normalize(r.d * nnt + sign(a) * n * (ddn * nnt + sqrt(cos2t)));
             float R0 = (nt - nc) * (nt - nc) / ((nt + nc) * (nt + nc)),
@@ -148,7 +146,7 @@ vec3 radiance(
             }
             else {
                 mask *= obj.c * TP;
-                r = Ray(x - nl * rOff, tdir);
+                r = Ray(x - nl * EPS, tdir);
             }
         }
     }
@@ -175,16 +173,17 @@ mat3 setCamera(in vec3 ro, in vec3 rt, in float cr)
 
 void main()
 {
+    // vec2 fc = gl_FragCoord.xy/u_resolution.xy;
     ivec2 ifc = ivec2(gl_FragCoord.xy);
   
     vec3 o_mask = vec3(1.0);
     vec3 o_ratts = texelFetch(u_ratts, ifc, 0).xyz;
 
-    Ray r;
-
     //seed = u_time + u_resolution.y * gl_FragCoord.x / u_resolution.x + gl_FragCoord.y / u_resolution.y;
-    seed = u_frame == 1U ? dot( gl_FragCoord.xy, vec2(12.9898, 78.233) ) + 1113.1*float(u_frame) : o_ratts.y;
+    seed = o_ratts.x == 0.0 ? dot( gl_FragCoord.xy, vec2(12.9898, 78.233) ) + 1113.1 : o_ratts.y;
     seed *= sin(66.666*u_time);
+
+    Ray r;
 
     if (o_ratts.x == 0.0) {
         vec2 of = -0.5 + rand2();
@@ -192,7 +191,7 @@ void main()
         mat3 ca = setCamera(r.o, vec3(0.0, 0.0, -1.5), 0.0);
         r = Ray(vec3(50.0, 40.8, 169.), normalize(ca * vec3(p, -1.5)));
     }
-    else {      
+    else {  
         o_mask = texelFetch(u_mask, ifc, 0).xyz;
 
         r = Ray(texelFetch(u_ro, ifc, 0).xyz, texelFetch(u_rd, ifc, 0).xyz);
