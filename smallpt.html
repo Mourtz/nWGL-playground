@@ -72,7 +72,7 @@ body{
       sandbox.setTexture("u_rd",    sandbox.textures["rd"].tex,     3);
       sandbox.setTexture("u_ratts", sandbox.textures["ratts"].tex,  4);
 
-      sandbox.gl.bindFramebuffer(sandbox.gl.DRAW_FRAMEBUFFER, fb.fb);
+      sandbox.bindFramebuffer(fb.fb);
       fb.setTexture(0, fb.t0);
       fb.setTexture(1, fb.t1);
       fb.setTexture(2, fb.t2);
@@ -83,10 +83,10 @@ body{
 
       sandbox.program = "display";
 
-      sandbox.programs["display"].setUniform("u_cont", 1.0 / frame);
+      sandbox.uniform("u_cont", 1.0 / frame);
       sandbox.setTexture("u_tex", fb.t0, 0);
 
-      sandbox.gl.bindFramebuffer(sandbox.gl.DRAW_FRAMEBUFFER, null);
+      sandbox.bindFramebuffer(null);
       sandbox.draw();
 
       // texture ping pong
