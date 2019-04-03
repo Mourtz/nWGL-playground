@@ -60,11 +60,7 @@ body{
     sandbox.programs["display"].addUniform("u_tex"  , "1i", 0);
 
     //------------------------- Render Loop -------------------------
-    (function render() {
-      stats.begin();
-
-      sandbox.m_draw(
-        new nWGL.pass(sandbox, 
+    let pass = new nWGL.pass(sandbox, 
         [
           {
             "call": function(){            
@@ -94,8 +90,12 @@ body{
               sandbox.bindFramebuffer(null);
             }
           }
-        ])
-      );
+    ]);
+
+    (function render() {
+      stats.begin();
+
+      sandbox.m_draw(pass);
 
       // texture ping pong
       sandbox.textures["acc"].swap(fb.textures[0]);
