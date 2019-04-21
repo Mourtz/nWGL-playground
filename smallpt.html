@@ -19,7 +19,7 @@ body{
 
     const WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
 
-    let sandbox = new nWGL.main({ "enableFloatEXT": true, "width": WIDTH, "height": HEIGHT });
+    let sandbox = new nWGL.main({ "width": WIDTH, "height": HEIGHT });
 
     //------------------------- Framebuffers -------------------------
     let fb = sandbox.addFrameBuffer({ "internalformat": ["RGBA32F", "RGBA32F", "RGBA32F", "RGBA32F", "RGBA32F"], "totalBuffers": 5 }, "backbuffer");
@@ -34,15 +34,12 @@ body{
     sandbox.addTexture({ "internalformat": "RGBA32F" }, "ratts");
 
     //------------------------- Shaders -------------------------
-    sandbox.addShader("vert.glsl", true, "vertex_shader");
-    sandbox.addShader("smallpt.glsl", false, "pt_shader");
-    sandbox.addShader("display.glsl", false, "display_shader");
+    sandbox.addShader("vert.glsl", "vertex_shader", true);
+    sandbox.addShader("smallpt.glsl", "pt_shader");
+    sandbox.addShader("display.glsl", "display_shader");
 
     //------------------------- RayTracing Program -------------------------
-    sandbox.addProgram([
-      sandbox.shaders["vertex_shader"], 
-      sandbox.shaders["pt_shader"] 
-    ], "raytracing");
+    sandbox.addProgram([ "vertex_shader", "pt_shader" ], "raytracing");
 
     sandbox.programs["raytracing"].addUniform("u_acc"   , "1i", 0);
     sandbox.programs["raytracing"].addUniform("u_mask"  , "1i", 1);
@@ -51,15 +48,12 @@ body{
     sandbox.programs["raytracing"].addUniform("u_ratts" , "1i", 4);
 
     //------------------------- Display Program -------------------------
-    sandbox.addProgram([
-        sandbox.shaders["vertex_shader"],
-        sandbox.shaders["display_shader"]
-      ], "display" );
+    sandbox.addProgram([ "vertex_shader", "display_shader" ], "display" );
 
     sandbox.programs["display"].addUniform("u_cont" , "1f", 1);
     sandbox.programs["display"].addUniform("u_tex"  , "1i", 0);
 
-    //------------------------- Render Loop -------------------------
+    //------------------------- Render Passes -------------------------
     sandbox.addPass( 
       new nWGL.pass(sandbox, 
         [
@@ -84,16 +78,15 @@ body{
           {
             "call": function(){
               sandbox.program = "display";
-
               sandbox.uniform("u_cont", 1.0 / (sandbox.frame+1));
               sandbox.setTexture("u_tex", fb.t0, 0);
-
               sandbox.bindFramebuffer(null);
             }
           }
       ])
     );
 
+    //------------------------- Render Loop -------------------------
     (function render() {
       stats.begin();
 
