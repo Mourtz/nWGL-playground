@@ -82,6 +82,16 @@ body{
               sandbox.setTexture("u_tex", fb.t0, 0);
               sandbox.bindFramebuffer(null);
             }
+          },
+          {
+            "compute": function(){
+              // texture ping pong
+              sandbox.textures["acc"].swap(fb.textures[0]);
+              sandbox.textures["mask"].swap(fb.textures[1]);
+              sandbox.textures["ro"].swap(fb.textures[2]);
+              sandbox.textures["rd"].swap(fb.textures[3]);
+              sandbox.textures["ratts"].swap(fb.textures[4]);
+            }
           }
       ])
     );
@@ -89,18 +99,8 @@ body{
     //------------------------- Render Loop -------------------------
     (function render() {
       stats.begin();
-
       sandbox.draw();
-
-      // texture ping pong
-      sandbox.textures["acc"].swap(fb.textures[0]);
-      sandbox.textures["mask"].swap(fb.textures[1]);
-      sandbox.textures["ro"].swap(fb.textures[2]);
-      sandbox.textures["rd"].swap(fb.textures[3]);
-      sandbox.textures["ratts"].swap(fb.textures[4]);
-
       window.requestAnimationFrame(render);
-
       stats.end();
     })();
   </script>
