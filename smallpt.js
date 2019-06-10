@@ -39,46 +39,44 @@ sandbox.programs["display"].addUniform("u_cont", "1f", 1);
 sandbox.programs["display"].addUniform("u_tex", "1i", 0);
 
 //------------------------- Render Passes -------------------------
-sandbox.addPass(
-  new nWGL.pass(sandbox,
-    [
-      {
-        "render": function () {
-          sandbox.program = "raytracing";
+sandbox.composer.addPass(
+  {
+    "render": function () {
+      sandbox.program = "raytracing";
 
-          sandbox.setTexture("u_acc", sandbox.textures["acc"].tex, 0);
-          sandbox.setTexture("u_mask", sandbox.textures["mask"].tex, 1);
-          sandbox.setTexture("u_ro", sandbox.textures["ro"].tex, 2);
-          sandbox.setTexture("u_rd", sandbox.textures["rd"].tex, 3);
-          sandbox.setTexture("u_ratts", sandbox.textures["ratts"].tex, 4);
+      sandbox.setTexture("u_acc", sandbox.textures["acc"].tex, 0);
+      sandbox.setTexture("u_mask", sandbox.textures["mask"].tex, 1);
+      sandbox.setTexture("u_ro", sandbox.textures["ro"].tex, 2);
+      sandbox.setTexture("u_rd", sandbox.textures["rd"].tex, 3);
+      sandbox.setTexture("u_ratts", sandbox.textures["ratts"].tex, 4);
 
-          sandbox.bindFramebuffer(fb.fb);
-          fb.setTexture(0, fb.t0);
-          fb.setTexture(1, fb.t1);
-          fb.setTexture(2, fb.t2);
-          fb.setTexture(3, fb.t3);
-          fb.setTexture(4, fb.t4);
-        }
-      },
-      {
-        "render": function () {
-          sandbox.program = "display";
-          sandbox.uniform("u_cont", 1.0 / (sandbox.frame + 1));
-          sandbox.setTexture("u_tex", fb.t0, 0);
-          sandbox.bindFramebuffer(null);
-        }
-      },
-      {
-        "compute": function () {
-          // texture ping pong
-          sandbox.textures["acc"].swap(fb.textures[0]);
-          sandbox.textures["mask"].swap(fb.textures[1]);
-          sandbox.textures["ro"].swap(fb.textures[2]);
-          sandbox.textures["rd"].swap(fb.textures[3]);
-          sandbox.textures["ratts"].swap(fb.textures[4]);
-        }
-      }
-    ])
+      sandbox.bindFramebuffer(fb.fb);
+      fb.setTexture(0, fb.t0);
+      fb.setTexture(1, fb.t1);
+      fb.setTexture(2, fb.t2);
+      fb.setTexture(3, fb.t3);
+      fb.setTexture(4, fb.t4);
+    },
+    "swapBuffer": false
+  },
+  {
+    "render": function () {
+      sandbox.program = "display";
+      sandbox.uniform("u_cont", 1.0 / (sandbox.frame + 1));
+      sandbox.setTexture("u_tex", fb.t0, 0);
+      sandbox.bindFramebuffer(null);
+    }
+  },
+  {
+    "compute": function () {
+      // texture ping pong
+      sandbox.textures["acc"].swap(fb.textures[0]);
+      sandbox.textures["mask"].swap(fb.textures[1]);
+      sandbox.textures["ro"].swap(fb.textures[2]);
+      sandbox.textures["rd"].swap(fb.textures[3]);
+      sandbox.textures["ratts"].swap(fb.textures[4]);
+    }
+  }
 );
 
 //------------------------- Render Loop -------------------------
