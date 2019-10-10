@@ -29,7 +29,7 @@ sandbox.addShader("vert.glsl", "vertex_shader", true);
 
     switch(scene){
       case "volume":
-        tc = "volume0.glsl";
+        tc = "medium0.glsl";
         break;
       default:
         break;
