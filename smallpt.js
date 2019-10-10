@@ -10,6 +10,8 @@ let sandbox = new nWGL.main({ "width": WIDTH, "height": HEIGHT });
 let fb = sandbox.addFrameBuffer({ "internalformat": ["RGBA32F", "RGBA32F", "RGBA32F", "RGBA32F", "RGBA32F"], "totalBuffers": 5 }, "backbuffer");
 
 //------------------------- Textures -------------------------
+// sandbox.addTexture({ "url": "tears_of_steel_bridge_8k.png" }, "hdr");
+
 sandbox.addTexture({ "internalformat": "RGBA32F" }, "acc");
 sandbox.addTexture({ "internalformat": "RGBA32F" }, "mask");
 
@@ -20,7 +22,21 @@ sandbox.addTexture({ "internalformat": "RGBA32F" }, "ratts");
 
 //------------------------- Shaders -------------------------
 sandbox.addShader("vert.glsl", "vertex_shader", true);
-sandbox.addShader("smallpt.glsl", "pt_shader");
+{
+  let scene = GetURLParameter("scene");
+  let tc = "smallpt.glsl";
+  if(scene){
+
+    switch(scene){
+      case "volume":
+        tc = "volume0.glsl";
+        break;
+      default:
+        break;
+    }
+  } 
+  sandbox.addShader(tc, "pt_shader");
+}
 sandbox.addShader("display.glsl", "display_shader");
 
 //------------------------- RayTracing Program -------------------------
@@ -31,6 +47,7 @@ sandbox.programs["raytracing"].addUniform("u_mask", "1i", 1);
 sandbox.programs["raytracing"].addUniform("u_ro", "1i", 2);
 sandbox.programs["raytracing"].addUniform("u_rd", "1i", 3);
 sandbox.programs["raytracing"].addUniform("u_ratts", "1i", 4);
+// sandbox.programs["raytracing"].addUniform("u_env", "1i", 5);
 
 //------------------------- Display Program -------------------------
 sandbox.addProgram(["vertex_shader", "display_shader"], "display");
@@ -86,3 +103,26 @@ sandbox.composer.addPass(
   stats.end();
   window.requestAnimationFrame(render);
 })();
+
+// if(false){
+//   render();
+// }else{
+//   // halt until the texture loads
+//   {
+//     let t = performance.now();
+//     (function check(){
+//       if(performance.now() - t > 500){
+//         if(sandbox.textures["hdr"].image.complete){
+//           sandbox.program = "raytracing";
+//           sandbox.setTexture("u_env", sandbox.textures["hdr"].tex, 5);
+    
+//           render();
+//           return;
+//         }
+//         t = performance.now();
+//       }
+//       window.requestAnimationFrame(check);
+//     })();
+//   }
+// }
+

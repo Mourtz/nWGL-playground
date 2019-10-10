@@ -49,7 +49,7 @@ const Sphere spheres[NUM_SPHERES] = Sphere[](
     Sphere(S_R, vec3(50., S_R + 81.6, 81.6), vec3(0.), vec3(.75), DIFF),
     Sphere(16.5, vec3(27., 16.5, 47.), vec3(0.), vec3(1.), SPEC),
     Sphere(16.5, vec3(73., 16.5, 78.), vec3(0.), vec3(1.), REFR),
-    Sphere(600., vec3(50., 681.33, 81.6), vec3(12.), vec3(0.), DIFF));
+    Sphere(600., vec3(50., 681.33, 81.6), vec3(18.), vec3(0.), DIFF));
 
 float intersect(Sphere s, Ray r)
 {
