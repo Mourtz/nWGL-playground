@@ -83,7 +83,7 @@ float intersect( in vec3 ro, in vec3 rd )
     float res = -1.0;
     float tmax = 16.0;
     float t = 0.01;
-    for(int i=0; i<256; i++ )
+    while(true)
     {
         float h = map(ro+rd*t);
         if( h<EPS || t>tmax ) break;
@@ -95,22 +95,7 @@ float intersect( in vec3 ro, in vec3 rd )
     return res;
 }
 
-float shadow( in vec3 ro, in vec3 rd )
-{
-    float res = 0.0;
-    const float tmax = 12.0;
-    float t = 0.01;
-    for(int i=0; i<80; i++ )
-    {
-        float h = map(ro+rd*t);
-        if( h<EPS || t>tmax) break;
-        t += h;
-    }
-
-    if( t>tmax ) res = 1.0;
-    
-    return res;
-}
+const vec3 m_density = vec3(0.01, 0.95, 1.0);
 
 vec3 radiance(
     inout Ray r,
@@ -125,41 +110,35 @@ vec3 radiance(
     float t = intersect( r.o, r.d );
 
     if(t < 0.0){
-      acc += mask*float(depth > 1.0)*1.5;
+      acc += mask*float(depth > 1.0)*2.0;
       depth = 0.0;
       return acc;
     }
 
-    r.o = r.o + r.d*(t+2.0*EPS);
-    r.d = refract(r.d, calcNormal(r.o), 1.0/1.66);
+    r.o = r.o + r.d*t;
+    r.d = refract(r.d, calcNormal(r.o), 1.0/1.3);
   }
 
-  const vec3 m_density = vec3(0.01, 0.95, 1.0);
-  const float m_scatter_distance = 0.2;
-  const vec3 m_sigmaA = 5.0*m_density;
-  const vec3 m_sigmaS = 1.15*m_density;
+  const vec3 m_sigmaA = 0.6*m_density;
+  const vec3 m_sigmaS = 1.2*m_density;
   const vec3 m_sigmaT = m_sigmaA+m_sigmaS;
 
   {
     float h = map(r.o);
 
     // float hl = -log(1.0 - rand(h)) / m_sigmaT[int(rand()*3.0)];
-    float hl = abs(h)+rand()*0.09;
+    float hl = abs(h-(0.7-rand()))*0.5;
 
     r.o = r.o + r.d*hl;
 
     h = map(r.o);
-    hl = abs(h);
-
-    mask *= exp(-min(hl, m_scatter_distance)*m_sigmaT);
-    // float pdf = 1.0;
+    mask *= exp(-min(hl, abs(h))*m_sigmaT);
 
     if(h > 0.0){
-      // pdf = dot(att, vec3(1.0/3.0));
+
     } else {
-        r.d = uniformSphere();
-        // pdf = dot(m_sigmaT*att, vec3(1.0/3.0));
-        mask *= m_sigmaS;
+      r.d = refract(r.d, vec3(0,sign(r.d.y),1), 1.0/1.5);
+      mask *= m_sigmaS;
     }
   }
 
