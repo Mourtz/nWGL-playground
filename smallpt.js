@@ -31,6 +31,9 @@ sandbox.addShader("vert.glsl", "vertex_shader", true);
       case "volume":
         tc = "medium0.glsl";
         break;
+      case "subsurface":
+        tc = "subsurface.glsl";
+        break;
       default:
         break;
     }
