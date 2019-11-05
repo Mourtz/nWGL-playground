@@ -85,7 +85,7 @@ float intersect( in vec3 ro, in vec3 rd )
     float t = 0.01;
     while(true)
     {
-        float h = map(ro+rd*t);
+        float h = 0.8*map(ro+rd*t);
         if( h<EPS || t>tmax ) break;
         t += h;
     }
@@ -95,62 +95,45 @@ float intersect( in vec3 ro, in vec3 rd )
     return res;
 }
 
-const vec3 m_density = vec3(0.01, 0.95, 1.0);
+float schlick(Ray r, vec3 n, float nc, float nt){
+  float R0 = pow((nc - nt) / (nc + nt), 2.);
+  return R0 + (1. - R0) * pow(1. + dot(n, r.d), 5.);
+}
 
-vec3 radiance(
+vec4 radiance(
     inout Ray r,
     inout vec3 mask,
     inout float depth)
 {
   ++depth;
 
-  vec3 acc = vec3(0);
+  const float nt = 1.5;
 
   if(map(r.o) > 0.0){
     float t = intersect( r.o, r.d );
 
     if(t < 0.0){
-      acc += mask*float(depth > 1.0)*2.0;
       depth = 0.0;
-      return acc;
+      return vec4(mask,1.0);
     }
 
     r.o = r.o + r.d*t;
-    r.d = refract(r.d, calcNormal(r.o), 1.0/1.3);
+    r.d = refract(r.d, calcNormal(r.o), 1.0f/nt);
+    mask*=vec3(0.7, 0.75, 0.8);
   }
 
-  const vec3 m_sigmaA = 0.6*m_density;
-  const vec3 m_sigmaS = 1.2*m_density;
-  const vec3 m_sigmaT = m_sigmaA+m_sigmaS;
-
   {
-    float h = map(r.o);
-
     // float hl = -log(1.0 - rand(h)) / m_sigmaT[int(rand()*3.0)];
-    float hl = abs(h-(0.7-rand()))*0.5;
+    float hl = (1.0-rand())*0.05;
+    mask *= exp(-hl*vec3(3,1.5,1.0));
 
     r.o = r.o + r.d*hl;
-
-    h = map(r.o);
-    mask *= exp(-min(hl, abs(h))*m_sigmaT);
-
-    if(h > 0.0){
-
-    } else {
-      r.d = refract(r.d, vec3(0,sign(r.d.y),1), 1.0/1.5);
-      mask *= m_sigmaS;
+    if(map(r.o)>EPS){
+      return vec4(mask, 0.5);
     }
   }
 
-  float roulettePdf = max(max(mask.x, mask.y), mask.z);
-  if (roulettePdf < 0.1f && depth > 2.0) {
-      if (rand(depth*12.762) < roulettePdf)
-          mask /= roulettePdf;
-      else
-          depth = 0.0;
-  }
-
-  return acc;
+  return vec4(0);
 }
 
 mat3 setCamera()
@@ -186,7 +169,7 @@ void main()
         r = Ray(texelFetch(u_ro, ifc, 0).xyz, texelFetch(u_rd, ifc, 0).xyz);
     }
 
-    out_acc.xyz = texelFetch(u_acc, ifc, 0).xyz + radiance(r, o_mask, o_ratts.x);
+    out_acc = texelFetch(u_acc, ifc, 0) + radiance(r, o_mask, o_ratts.x);
     out_mask.xyz = o_mask;
     out_ro.xyz = r.o;
     out_rd.xyz = r.d;

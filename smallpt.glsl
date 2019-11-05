@@ -85,12 +85,12 @@ vec3 jitter(vec3 d, float phi, float sina, float cosa)
     return (u * cos(phi) + v * sin(phi)) * sina + w * cosa;
 }
 
-vec3 radiance(
+vec4 radiance(
     inout Ray r,
     inout vec3 mask,
     inout float depth)
 {
-    vec3 acc = vec3(0.0);
+    vec4 acc = vec4(0.0);
 
     float t;
     Sphere obj;
@@ -122,12 +122,12 @@ vec3 radiance(
                 e += (s.e * clamp(dot(l, n),0.,1.) * omega) / PI;
             }
         }
-        acc += mask * obj.e + mask * obj.c * e;
+        acc += vec4(mask * obj.e + mask * obj.c * e, 1.0);
         mask *= obj.c;
         r = Ray(x + nl * EPS, d);
     }
     else if (obj.refl == SPEC) {
-        acc += mask * obj.e;
+        acc += vec4(mask * obj.e, 1);
         mask *= obj.c;
         r = Ray(x + nl * EPS, reflect(r.d, n));
     }
@@ -197,7 +197,7 @@ void main()
         r = Ray(texelFetch(u_ro, ifc, 0).xyz, texelFetch(u_rd, ifc, 0).xyz);
     }
 
-    out_acc.xyz = texelFetch(u_acc, ifc, 0).xyz + radiance(r, o_mask, o_ratts.x);
+    out_acc = texelFetch(u_acc, ifc, 0) + radiance(r, o_mask, o_ratts.x);
     out_mask.xyz = o_mask;
     out_ro.xyz = r.o;
     out_rd.xyz = r.d;

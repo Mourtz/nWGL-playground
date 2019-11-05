@@ -9,7 +9,6 @@ precision mediump usampler2D;
 layout(location = 0) out highp vec4 FragColor;
 
 uniform sampler2D u_tex;
-uniform float u_cont;
 uniform vec2 u_resolution;
 
 // linear white point
@@ -54,7 +53,8 @@ void main() {
   vec2 pp = gl_FragCoord.xy/u_resolution.xy;
   vec2 p = 1.-2.*gl_FragCoord.xy/u_resolution.xy;
 
-  vec3 color = texelFetch( u_tex, ivec2(gl_FragCoord.xy), 0 ).rgb * u_cont;
+  vec4 ch0 = texelFetch( u_tex, ivec2(gl_FragCoord.xy), 0 );
+  vec3 color = ch0.rgb / ch0.a;
 
   float vignette = 1.25 / (1.1 + 1.1*dot(p, p));
   vignette *= vignette;

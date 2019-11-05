@@ -52,7 +52,7 @@ sandbox.programs["raytracing"].addUniform("u_ratts", "1i", 4);
 //------------------------- Display Program -------------------------
 sandbox.addProgram(["vertex_shader", "display_shader"], "display");
 
-sandbox.programs["display"].addUniform("u_cont", "1f", 1);
+// sandbox.programs["display"].addUniform("u_cont", "1f", 1);
 sandbox.programs["display"].addUniform("u_tex", "1i", 0);
 
 //------------------------- Render Passes -------------------------
@@ -79,7 +79,7 @@ sandbox.composer.addPass(
   {
     "render": function () {
       sandbox.program = "display";
-      sandbox.uniform("u_cont", 1.0 / (sandbox.frame + 1));
+      // sandbox.uniform("u_cont", 1.0 / (sandbox.frame + 1));
       sandbox.setTexture("u_tex", fb.t0, 0);
       sandbox.bindFramebuffer(null);
     }
