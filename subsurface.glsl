@@ -73,11 +73,11 @@ bool march(inout vec3 o, vec3 dir){
     vec3 p = o;
     float e = 0.0;
     while(true){
-        float d = 0.6*map(p).x;
-        e += d;
-        if(d < 5e-4 || e > 12.0)
-            break;
+        float d = 0.4*map(p).x;
         p += d*dir;
+        e += d;
+        if(d < 1e-4 || e > 12.0)
+            break;
     }
     o = p;
     return e<=12.0;
@@ -112,7 +112,13 @@ float ggx(vec3 N, vec3 V, vec3 L, float roughness, float F0){
 
 	return dotNL * D * F * G(dotNL,k)*G(dotNV,k);
 }
+vec3 uniformSphere(){
+	float phi = rand()*TWO_PI;
+	float z = rand()*2.0f - 1.0f;
+	float r = sqrt(max(1.0f - z * z, 0.0f));
 
+	return vec3(cos(phi)*r, sin(phi)*r, z);
+}
 vec4 radiance(
     inout Ray r,
     inout vec4 mask,
@@ -130,20 +136,20 @@ vec4 radiance(
 
     vec3 ld = normalize(l-r.o);
 
-    mask.w = exp(-distance(l, r.o))*150.0;
+    mask.w = exp(-distance(l, r.o))*100.0;
     mask.y = 0.5+0.5*dot(n, ld);
     mask.z = ggx(n, -r.d, ld, 0.3, 0.7);
 
-    r.d = refract(r.d, n, 1.0f/1.38);
+    r.d = refract(r.d, n, 1.0f/1.68);
   }
 
   ++depth;
 
   {
     // float hl = -log(1.0 - rand(h)) / m_sigmaT[int(rand()*3.0)];
-    float hl = rand()*0.01;
+    float hl = rand()*0.1;
 
-    mask.x *= exp(-hl*5.0);
+    mask.x *= exp(-hl*2.0);
 
     r.o = r.o + r.d*hl;
     vec2 h = map(r.o);
@@ -155,6 +161,8 @@ vec4 radiance(
       vec3 albedo = mix(vec3(0.6, 0.2, 0.2), vec3(0.2, 0.2, 0.6), h.y);
       depth = 0.0;
       return vec4(mask.w*(albedo*diff+0.025*mask.z), 1.0);
+    } else {
+      r.d = uniformSphere();
     }
   }
 
