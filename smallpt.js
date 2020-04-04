@@ -2,12 +2,10 @@ let stats = new Stats();
 stats.showPanel(0);
 document.body.appendChild(stats.dom);
 
-const WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
-
-let sandbox = new nWGL.main({ "width": WIDTH, "height": HEIGHT });
+let sandbox = new nWGL.main({ "fullscreen": true });
 
 //------------------------- Framebuffers -------------------------
-let fb = sandbox.addFrameBuffer({ "internalformat": ["RGBA32F", "RGBA32F", "RGBA32F", "RGBA32F", "RGBA32F"], "totalBuffers": 5 }, "backbuffer");
+let fb = sandbox.addFrameBuffer({ "internalformat": "RGBA32F", "totalBuffers": 5 }, "backbuffer");
 
 //------------------------- Textures -------------------------
 // sandbox.addTexture({ "url": "tears_of_steel_bridge_8k.png" }, "hdr");
