@@ -25,8 +25,20 @@ body{
 
       return null;
     }
+
+    switch(GetURLParameter("scene")){
+      case "volume":
+        window.location = "examples/medium0/medium0.html";
+        break;
+      case "subsurface":
+        window.location = "examples/subsurface/subsurface.html";
+        break;
+      default:
+        window.location = "examples/smallpt/smallpt.html";
+        break;
+    }
+
   </script>
-  <script src="smallpt.js"></script>
 </body>
 
 </html>

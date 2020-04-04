@@ -19,26 +19,9 @@ sandbox.addTexture({ "internalformat": "RGBA32F" }, "rd");
 sandbox.addTexture({ "internalformat": "RGBA32F" }, "ratts");
 
 //------------------------- Shaders -------------------------
-sandbox.addShader("vert.glsl", "vertex_shader", true);
-{
-  let scene = GetURLParameter("scene");
-  let tc = "smallpt.glsl";
-  if(scene){
-
-    switch(scene){
-      case "volume":
-        tc = "medium0.glsl";
-        break;
-      case "subsurface":
-        tc = "subsurface.glsl";
-        break;
-      default:
-        break;
-    }
-  } 
-  sandbox.addShader(tc, "pt_shader");
-}
-sandbox.addShader("display.glsl", "display_shader");
+sandbox.addShader("../../shaders/vert.glsl", "vertex_shader", true);
+sandbox.addShader("smallpt.glsl", "pt_shader");
+sandbox.addShader("../../shaders/display.glsl", "display_shader");
 
 //------------------------- RayTracing Program -------------------------
 sandbox.addProgram(["vertex_shader", "pt_shader"], "raytracing");
