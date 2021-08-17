@@ -15,16 +15,42 @@ uniform sampler2D u_rd;
 uniform sampler2D u_ratts;
 uniform sampler2D u_env;
 
+uniform uint u_frame;
 uniform float u_time;
 uniform vec2 u_resolution;
 
 #define PI          3.1415926535897932384626433832795f
 #define TWO_PI			 6.283185307179586476925286766559f
 
-float seed = 0.;
-float rand() { return fract(sin(seed+=0.1) * 43758.5453123); }
-float rand(float h) { return fract(sin(seed+=h) * 43758.5453123); }
-vec2 rand2() { float r0 = rand(); return vec2(r0, fract(sin(seed+=r0) * 43758.5453123)); }
+//internal RNG state 
+uvec4 s0, s1; 
+ivec2 pixel;
+
+void rng_initialize(vec2 p, uint frame)
+{
+    pixel = ivec2(p);
+
+    //white noise seed
+    s0 = uvec4(p, uint(frame), uint(p.x) + uint(p.y));
+    
+    //blue noise seed
+    s1 = uvec4(frame, frame*15843u, frame*31u + 4566u, frame*2345u + 58585u);
+}
+
+// https://www.pcg-random.org/
+uvec4 pcg4d(inout uvec4 v)
+{
+	  v = v * 1664525u + 1013904223u;
+    v.x += v.y*v.w; v.y += v.z*v.x; v.z += v.x*v.y; v.w += v.y*v.z;
+    v = v ^ (v>>16u);
+    v.x += v.y*v.w; v.y += v.z*v.x; v.z += v.x*v.y; v.w += v.y*v.z;
+    return v;
+}
+
+float rand(){ return float(pcg4d(s0).x)/float(0xffffffffu); }
+vec2 rand2(){ return vec2(pcg4d(s0).xy)/float(0xffffffffu); }
+vec3 rand3(){ return vec3(pcg4d(s0).xyz)/float(0xffffffffu); }
+vec4 rand4(){ return vec4(pcg4d(s0))/float(0xffffffffu); }
 
 const struct Ray { vec3 o, d; };
 
@@ -183,15 +209,12 @@ void main()
     ivec2 ifc = ivec2(gl_FragCoord.xy);
   
     vec4 o_mask = vec4(1.0);
-    vec3 o_ratts = texelFetch(u_ratts, ifc, 0).xyz;
-
-    //seed = u_time + u_resolution.y * gl_FragCoord.x / u_resolution.x + gl_FragCoord.y / u_resolution.y;
-    seed = o_ratts.x == 0.0 ? dot( gl_FragCoord.xy, vec2(12.9898, 78.233) ) + 1113.1 : o_ratts.y;
-    seed *= sin(66.666*u_time);
+    vec4 o_ro = texelFetch(u_ro, ifc, 0);
 
     Ray r = Ray(vec3(0, 0, 1.65), vec3(0,0,1));
+    rng_initialize(gl_FragCoord.xy, u_frame);
 
-    if (o_ratts.x == 0.0) {
+    if (o_ro.w == 0.0) {
       vec2 of = rand2()*2.0 - 1.0;
       vec2 p = (-u_resolution.xy + 2.0 * (gl_FragCoord.xy + of)) / u_resolution.y;      
       r.d = setCamera() * normalize(vec3(vec2(.5 * 0.036) * p, 0.019));
@@ -199,12 +222,11 @@ void main()
     else {  
         o_mask = texelFetch(u_mask, ifc, 0);
 
-        r = Ray(texelFetch(u_ro, ifc, 0).xyz, texelFetch(u_rd, ifc, 0).xyz);
+        r = Ray(o_ro.xyz, texelFetch(u_rd, ifc, 0).xyz);
     }
 
-    out_acc = texelFetch(u_acc, ifc, 0) + radiance(r, o_mask, o_ratts.x);
+    out_acc = texelFetch(u_acc, ifc, 0) + radiance(r, o_mask, o_ro.w);
     out_mask = o_mask;
-    out_ro.xyz = r.o;
+    out_ro = vec4(r.o, o_ro.w);
     out_rd.xyz = r.d;
-    out_ratts.xy = vec2(o_ratts.x, seed);
 }
