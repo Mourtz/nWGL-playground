@@ -6,12 +6,12 @@ layout(location = 0) out vec4 out_color;
 
 uniform float u_time;
 uniform vec2 u_resolution;
-uniform vec2 u_mouse;
+uniform vec3 u_mouse;
 
 #define time u_time*0.001
 
 #define AA 2	// make this 1 if you have a slow computer
-#define MOUSE_SENSITIVITY vec2(1, 2)
+#define MOUSE_SENSITIVITY vec2(1, 1)
 
 #define PI 3.141592653589793238
 
@@ -66,7 +66,7 @@ void main()
 {  
     vec2 fragCoord = gl_FragCoord.xy;
     fragCoord.x*=u_resolution.x/u_resolution.y;
-    vec2 mouse = (u_mouse.xy/u_resolution.xy-0.5)*MOUSE_SENSITIVITY;
+    vec2 mouse = (u_mouse.xy-0.5)*MOUSE_SENSITIVITY;
     
     vec3 col = vec3(0.0);
 #if AA > 1
